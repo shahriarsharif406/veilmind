@@ -39,6 +39,14 @@ Tests: `cargo test --manifest-path veilcore/Cargo.toml` and `python3 -m pytest t
 - **Python** (standard library only, plus the Rust binary): masking, pipeline, Gemini REST client, loopback web UI.
 - **Gemini API** for the agent.
 
+## Related open source, and how Veilmind differs
+
+- **Microsoft Presidio** detects and anonymizes PII with regex and NER models. Its built-in reversible operator is AES encrypt/decrypt, and the mapping store is left for you to build. Veilmind adds a split master key (Shamir, k of n), token-bound authenticated encryption, and an outgoing-request leak check.
+- **Reversible scrubbers and gateways** (for example `pii-airlock`, built on Presidio) keep a local placeholder-to-value mapping file. In Veilmind there is no plaintext mapping: values exist only as AES-GCM ciphertext, and opening one needs a quorum of key holders.
+- **HashiCorp Vault's Shamir** uses GF(256) and was affected by a cache-timing flaw (CVE-2023-25000) because of precomputed lookup tables. Veilmind's field multiply is branch-free and table-free, and tested against a reference for all 65,536 input pairs.
+
+See [MATH.md](MATH.md) for the mathematics and threat model.
+
 ## Honest limits
 
 - Without fully homomorphic encryption an LLM cannot reason over true ciphertext. Veilmind keeps secrets *out* of the model's view: it reasons over opaque references and the answer is opened locally. If a task needs the model to read the value itself, that value must not be sealed.

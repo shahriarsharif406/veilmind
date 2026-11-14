@@ -18,17 +18,14 @@ use zeroize::Zeroize;
 const KEY_LEN: usize = 32;
 
 // ---------- GF(256), AES polynomial 0x11b ----------
+// Constant-time: no secret-dependent branches and no LOG/EXP table lookups. Table-based GF(256)
+// code leaks through cache timing (this class of bug was CVE-2023-25000 in HashiCorp Vault's Shamir).
 fn gf_mul(mut a: u8, mut b: u8) -> u8 {
     let mut p = 0u8;
     for _ in 0..8 {
-        if b & 1 != 0 {
-            p ^= a;
-        }
-        let hi = a & 0x80;
-        a <<= 1;
-        if hi != 0 {
-            a ^= 0x1b;
-        }
+        p ^= a & 0u8.wrapping_sub(b & 1); // add `a` iff low bit of b is set
+        let carry = 0u8.wrapping_sub(a >> 7); // 0xFF iff a's top bit is set
+        a = (a << 1) ^ (0x1b & carry); // reduce by x^8 + x^4 + x^3 + x + 1
         b >>= 1;
     }
     p
@@ -199,6 +196,37 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Table-based reference (log/exp, generator 3). Used ONLY in tests to check the constant-time code.
+    fn ref_mul(a: u8, b: u8) -> u8 {
+        if a == 0 || b == 0 {
+            return 0;
+        }
+        let (mut exp, mut log) = ([0u8; 255], [0usize; 256]);
+        let mut x = 1u8;
+        for i in 0..255 {
+            exp[i] = x;
+            log[x as usize] = i;
+            let x2 = (x << 1) ^ if x & 0x80 != 0 { 0x1b } else { 0 };
+            x = x2 ^ x; // multiply by 3
+        }
+        exp[(log[a as usize] + log[b as usize]) % 255]
+    }
+
+    #[test]
+    fn gf_mul_matches_aes_spec_vector() {
+        // FIPS-197 section 4.2: {57} x {83} = {c1}
+        assert_eq!(gf_mul(0x57, 0x83), 0xc1);
+    }
+
+    #[test]
+    fn gf_mul_matches_reference_for_all_65536_pairs() {
+        for a in 0..=255u8 {
+            for b in 0..=255u8 {
+                assert_eq!(gf_mul(a, b), ref_mul(a, b), "a={a} b={b}");
+            }
+        }
+    }
 
     #[test]
     fn gf_inverse_is_correct() {

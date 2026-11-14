@@ -84,3 +84,11 @@ def test_unknown_tokens_are_flagged_not_invented(vault):
 def test_card_span_has_no_trailing_space():
     sp = [s for s in masker.find_spans("card 4111 1111 1111 1111 email a@b.co") if s.kind == "CARD"][0]
     assert sp.value == "4111 1111 1111 1111"
+
+
+def test_tolerates_model_formatting_of_tokens(vault):
+    c = vault.seal("a@b.co", "⟦EMAIL_1⟧")
+    table = {"⟦EMAIL_1⟧": {"kind": "EMAIL", "cipher": c}}
+    for variant in ("⟦EMAIL_1⟧", "⟦ EMAIL_1 ⟧", "⟦EMAIL\\_1⟧"):
+        out, ev, _ = masker.unmask(f"to {variant}.", table, vault.open)
+        assert out == "to a@b.co." and ev[0]["status"] == "opened"

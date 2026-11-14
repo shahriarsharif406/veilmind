@@ -80,7 +80,7 @@ def mask(text: str, seal_fn) -> tuple[str, dict[str, dict]]:
     return "".join(out), table
 
 
-_TOKEN = re.compile(r"⟦[A-Z]+_\d+⟧")
+_TOKEN = re.compile(r"⟦\s*([A-Z]+)\s*\\?_\s*(\d+)\s*⟧")
 
 
 def unmask(text: str, table: dict[str, dict], open_fn) -> tuple[str, list[dict], list[dict]]:
@@ -92,7 +92,7 @@ def unmask(text: str, table: dict[str, dict], open_fn) -> tuple[str, list[dict],
     segs: list[dict] = []
     out, cur = [], 0
     for m in _TOKEN.finditer(text):
-        tok = m.group(0)
+        tok = f"⟦{m.group(1)}_{m.group(2)}⟧"  # canonical form, tolerant of spacing/escaping
         if m.start() > cur:
             segs.append({"t": text[cur:m.start()], "s": "plain"})
         if tok not in table:
