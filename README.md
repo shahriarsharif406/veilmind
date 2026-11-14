@@ -1,5 +1,7 @@
 # Veilmind
 
+**Try it in your browser:** https://shahriarsharif406.github.io/veilmind/ (same Shamir 3-of-5 + AES-256-GCM maths in JavaScript; the model reply is simulated and nothing leaves the page). The full app, with the Rust core and live Gemini, runs on your own computer, see below.
+
 **Ask Gemini without telling it anything.** Veilmind is a local AI agent whose inputs are sealed before they leave your computer. The LLM only ever sees opaque references, and the master key is never known to the agent or to the API provider.
 
 Built for the *Mathematics for systems security* hackathon, **AI pipeline track**.
