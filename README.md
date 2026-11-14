@@ -24,9 +24,9 @@ Built for the *Mathematics for systems security* hackathon, **AI pipeline track*
 ## Run it
 
 ```bash
-cargo build --release --manifest-path veilcore/Cargo.toml && cp veilcore/target/release/veilcore bin/
-cp .env.example .env          # then paste your Gemini key into .env
-python3 -m veilmind           # http://127.0.0.1:8765  (loopback only)
+cargo build --release --manifest-path veilcore/Cargo.toml     # Windows, macOS, Linux
+cp .env.example .env          # Windows: copy .env.example .env   (then paste your Gemini key into .env)
+python3 -m veilmind           # Windows: python -m veilmind   ->  http://127.0.0.1:8765 (loopback only)
 ```
 
 No key? It runs in a clearly labelled demo mode with simulated replies, so you can still see the sealing, the leak check and the vault.

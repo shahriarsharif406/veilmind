@@ -17,8 +17,11 @@ _ROOT = Path(__file__).resolve().parent.parent
 
 
 def _binary() -> str:
-    for cand in (os.environ.get("VEILCORE_BIN"), _ROOT / "bin" / "veilcore",
-                 _ROOT / "veilcore" / "target" / "release" / "veilcore"):
+    names = ("veilcore.exe", "veilcore") if os.name == "nt" else ("veilcore", "veilcore.exe")
+    cands = [os.environ.get("VEILCORE_BIN")]
+    for folder in (_ROOT / "bin", _ROOT / "veilcore" / "target" / "release"):
+        cands += [folder / n for n in names]
+    for cand in cands:
         if cand and Path(cand).exists():
             return str(cand)
     raise FileNotFoundError("veilcore binary not found. Run: cargo build --release --manifest-path veilcore/Cargo.toml")
